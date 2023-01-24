@@ -18,11 +18,11 @@ import torch.nn.functional as F
 
 # 构造参数解析器并解析参数
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--images",default="E:/github/deeplabv3-plus-pytorch-main/img/", type=str, #required=True,
+ap.add_argument("-i", "--images",default="img/", type=str, #required=True,
                 help="path to input directory of images to stitch")
-ap.add_argument("-o", "--output", default="E:/github/deeplabv3-plus-pytorch-main/VOCdevkit/VOC2007/out3/",type=str, #required=True,
+ap.add_argument("-o", "--output", default="img/out/",type=str, #required=True,
                 help="path to the output image")
-ap.add_argument("-c", "--cache", default="E:/github/deeplabv3-plus-pytorch-main/VOCdevkit/VOC2007/",type=str, #required=True,
+ap.add_argument("-c", "--cache", default="VOCdevkit/VOC2007/",type=str, #required=True,
                 help="path to the cache")
 args = vars(ap.parse_args())  # vars函数是实现返回对象object的属性和属性值的字典对象
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     mkdir(args['output'])
     mkdir(args['cache'] + '/out/')
     mkdir(args['cache'] + '/out1/')
-    mkdir(args['cache'] + 'out2/')
+    #mkdir(args['cache'] + 'out2/')
     mkdir(args['cache'] + '/imgout/')
     mkdir(args['cache'] + '/imgout1/')
     deeplab = DeeplabV3()
@@ -97,101 +97,32 @@ if __name__ == "__main__":
         IMAGES_PATH = args['cache'] + '/out1/' # 图片集地址
         IMAGES_FORMAT = ['.jpg', '.jpg'] # 图片格式
         height, weight = image.shape[:2]
-
+        max_y, max_x = image.shape[0], image.shape[1]
         IMAGE_SIZE = 512
-        IMAGE_ROW = 20 # 图片间隔，也就是合并成一张图后，一共有几行
-        IMAGE_COLUMN = 28 # 图片间隔，也就是合并成一张图后，一共有几列
-        IMAGE_SAVE_PATH = args['cache'] + '/out2/' + x[num] # 图片转换后的地址
-        to_image = Image.new('RGB', (IMAGE_COLUMN * IMAGE_SIZE, IMAGE_ROW * IMAGE_SIZE)) #创建一个新图
+        padding=(0, 0, 0)
+            # 若不能等分，则填充至等分
+        if max_x % IMAGE_SIZE != 0:
+            padding_x = IMAGE_SIZE - (max_x % IMAGE_SIZE)
+            img = cv2.copyMakeBorder(image, 0, 0, 0, padding_x, cv2.BORDER_CONSTANT, value=padding)
+            max_x = img.shape[1]
+        if max_y % IMAGE_SIZE != 0:
+            padding_y = IMAGE_SIZE - (max_y % IMAGE_SIZE)
+            img = cv2.copyMakeBorder(image, 0, padding_y, 0, 0, cv2.BORDER_CONSTANT, value=padding)
+            max_y = img.shape[0]
+            
+        IMAGE_ROW = int(max_x / IMAGE_SIZE) # 图片间隔，也就是合并成一张图后，一共有几行
+        IMAGE_COLUMN = int(max_y / IMAGE_SIZE) # 图片间隔，也就是合并成一张图后，一共有几列
+        IMAGE_SAVE_PATH = args['output'] + x[num] # 图片转换后的地址
+        to_image = Image.new('RGB', (IMAGE_ROW * IMAGE_SIZE, IMAGE_COLUMN * IMAGE_SIZE)) #创建一个新图
+        print(to_image.size)
+        print(IMAGE_ROW,IMAGE_COLUMN)
         indey = 0
  
-        for ii in range(0,IMAGE_ROW*IMAGE_COLUMN):
-            if indey < 20:
+        for j in range(0, IMAGE_COLUMN):
+            for i in range(0, IMAGE_ROW):
                 from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, (indey*IMAGE_SIZE, 0*IMAGE_SIZE))
-            elif (indey >=20) & (indey < 40):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-20)*IMAGE_SIZE, 1*IMAGE_SIZE))
-            elif (indey >=40) & (indey < 60):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-40)*IMAGE_SIZE, 2*IMAGE_SIZE))
-            elif (indey >=60) & (indey < 80):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-60)*IMAGE_SIZE, 3*IMAGE_SIZE))
-            elif (indey >=80) & (indey < 100):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-80)*IMAGE_SIZE, 4*IMAGE_SIZE))
-            elif (indey >=100) & (indey < 120):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-100)*IMAGE_SIZE, 5*IMAGE_SIZE))
-            elif (indey >=120) & (indey < 140):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-120)*IMAGE_SIZE, 6*IMAGE_SIZE))
-            elif (indey >=140) & (indey < 160):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-140)*IMAGE_SIZE, 7*IMAGE_SIZE))
-            elif (indey >=160) & (indey < 180):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-160)*IMAGE_SIZE, 8*IMAGE_SIZE))
-            elif (indey >=180) & (indey < 200):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-180)*IMAGE_SIZE, 9*IMAGE_SIZE))
-            elif (indey >=200) & (indey < 220):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-200)*IMAGE_SIZE, 10*IMAGE_SIZE))
-            elif (indey >=220) & (indey < 240):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-220)*IMAGE_SIZE, 11*IMAGE_SIZE))
-            elif (indey >=240) & (indey < 260):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-240)*IMAGE_SIZE, 12*IMAGE_SIZE))
-            elif (indey >=260) & (indey < 280):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-260)*IMAGE_SIZE, 13*IMAGE_SIZE))
-            elif (indey >=280) & (indey < 300):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-280)*IMAGE_SIZE, 14*IMAGE_SIZE))
-            elif (indey >=300) & (indey < 320):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-300)*IMAGE_SIZE, 15*IMAGE_SIZE))
-            elif (indey >=320) & (indey < 340):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-320)*IMAGE_SIZE, 16*IMAGE_SIZE))
-            elif (indey >=340) & (indey < 360):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-340)*IMAGE_SIZE, 17*IMAGE_SIZE))
-            elif (indey >=360) & (indey < 380):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-360)*IMAGE_SIZE, 18*IMAGE_SIZE))
-            elif (indey >=380) & (indey < 400):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-380)*IMAGE_SIZE, 19*IMAGE_SIZE))
-            elif (indey >=400) & (indey < 420):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-400)*IMAGE_SIZE, 20*IMAGE_SIZE))
-            elif (indey >=420) & (indey < 440):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-420)*IMAGE_SIZE, 21*IMAGE_SIZE))
-            elif (indey >=440) & (indey < 460):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-440)*IMAGE_SIZE, 22*IMAGE_SIZE))
-            elif (indey >=460) & (indey < 480):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-460)*IMAGE_SIZE, 23*IMAGE_SIZE))
-            elif (indey >=480) & (indey < 500):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-480)*IMAGE_SIZE, 24*IMAGE_SIZE))
-            elif (indey >=500) & (indey < 520):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-500)*IMAGE_SIZE, 25*IMAGE_SIZE))
-            elif (indey >=520) & (indey < 540):
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-520)*IMAGE_SIZE, 26*IMAGE_SIZE))
-            else:
-                from_image = Image.open(IMAGES_PATH + str(indey) + '.jpg')
-                to_image.paste(from_image, ((indey-540)*IMAGE_SIZE, 27*IMAGE_SIZE))
-
-            indey = indey +1
+                to_image.paste(from_image, (i*IMAGE_SIZE, j*IMAGE_SIZE))
+                indey = indey + 1
         to_image = to_image.crop((0,0,weight,height))
         to_image.save(IMAGE_SAVE_PATH) # 保存新图
 
